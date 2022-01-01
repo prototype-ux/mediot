@@ -1,0 +1,165 @@
+#include <ESP8266WiFi.h>
+WiFiClient client;
+WiFiServer server(80);
+String data ="";
+int bit1 = 0; /* GPIO0(D4)*/
+int bit2 = 2; /* GPIO2(D3)*/
+int bit3 = 15; /* GPIO15(D7)*/
+void setup()
+{
+Serial.begin(9600);
+WiFi.softAP ("SSID", "password");
+Page No.6
+while(WiFi.softAPgetStationNum()==0)
+{
+Serial.println ("No Device connected");
+delay(3000);
+}
+Serial.println("Connected");
+IPAddress myIP = WiFi.softAPIP();
+Serial.print("AP IP address: ");
+Serial.println(myIP);
+Serial.println("NodeMCU is Connected!");
+server.begin();
+pinMode(bit1, OUTPUT);
+pinMode(bit2, OUTPUT);
+pinMode(bit3, OUTPUT);
+}
+void loop()
+{
+client = server.available();
+if (!client) return;
+data = checkClient ();
+if (data == "forward") MotorForward();
+else if (data == "backward") MotorBackward();
+else if (data == "left") TurnLeft();
+else if (data == "goright") TurnRight();
+else if (data == "stop") MotorStop();
+}
+void MotorForward(void)
+{
+
+digitalWrite(bit1, LOW);
+digitalWrite(bit2, LOW);
+digitalWrite(bit3, HIGH);
+Serial.println("forward");
+}
+void MotorBackward(void)
+{
+digitalWrite(bit1, HIGH);
+digitalWrite(bit2, LOW);
+digitalWrite(bit3, LOW);
+Serial.println("backward");
+}
+void TurnLeft(void)
+{
+digitalWrite(bit1, LOW);
+digitalWrite(bit2, HIGH);
+digitalWrite(bit3, HIGH);
+Serial.println("left");
+}
+void TurnRight(void)
+{
+digitalWrite(bit1, LOW);
+digitalWrite(bit2, HIGH);
+digitalWrite(bit3, LOW);
+Serial.println("right");
+}
+void MotorStop(void)
+{
+digitalWrite(bit1, LOW);
+digitalWrite(bit2, LOW);
+digitalWrite(bit3, LOW);
+Serial.println("stop");
+
+}
+/**RECEIVE DATA FROM the APP **/
+String checkClient (void)
+{
+while(!client.available()) delay(1);
+String request = client.readStringUntil('\r');
+request.remove(0, 5);
+request.remove(request.length()-9,9);
+return request;
+}
+2) NodeMCU TO Arduino Coding
+int leftMotorForward = 13; /* GPIO2(D8) -> IN3 */
+int rightMotorForward = 7; /* GPIO15(D7) -> IN1 */
+int leftMotorBackward = 12; /* GPIO0(D13) -> IN4 */
+int rightMotorBackward = 8;
+int stopr = 3;
+int input;
+/* GPIO13(D12) -> IN2 */
+//int speedpin = A0;//SET SPEED
+//int sp;
+void setup()
+{
+Serial.begin(9600);
+pinMode(leftMotorForward, OUTPUT);
+pinMode(rightMotorForward, OUTPUT);
+pinMode(leftMotorBackward, OUTPUT);
+pinMode(rightMotorBackward, OUTPUT);
+input=1;
+// pinMode(speedpin, OUTPUT);
+}
+void loop()
+{
+//Serial.println ("hello");
+
+//Serial.println (input);
+if(digitalRead(stopr)==HIGH)
+{
+input=0;
+//Serial.println (input);
+digitalWrite(leftMotorForward,LOW);
+digitalWrite(rightMotorForward,LOW);
+digitalWrite(leftMotorBackward,LOW);
+digitalWrite(rightMotorBackward,LOW);
+delay(2000);
+}
+else
+{
+input=1;
+//Serial.println (input);
+digitalWrite(leftMotorForward,HIGH);
+digitalWrite(rightMotorForward,HIGH);
+digitalWrite(leftMotorBackward,LOW);
+digitalWrite(rightMotorBackward,LOW);
+}
+if(input==0)//stop
+{
+digitalWrite(leftMotorForward,LOW);
+digitalWrite(rightMotorForward,LOW);
+digitalWrite(leftMotorBackward,LOW);
+digitalWrite(rightMotorBackward,LOW);
+}
+else if(input==1)//FORWAED
+{
+digitalWrite(leftMotorForward,HIGH);
+digitalWrite(rightMotorForward,HIGH);
+digitalWrite(leftMotorBackward,LOW);
+digitalWrite(rightMotorBackward,LOW);
+}
+else if(input==2)//backward
+
+{
+digitalWrite(leftMotorBackward,HIGH);
+digitalWrite(rightMotorBackward,HIGH);
+digitalWrite(leftMotorForward,LOW);
+digitalWrite(rightMotorForward,LOW);
+}
+else if(input==3)//left
+{
+digitalWrite(leftMotorForward,LOW);
+digitalWrite(rightMotorForward,HIGH);
+digitalWrite(rightMotorBackward,LOW);
+digitalWrite(leftMotorBackward,HIGH);
+}
+else if(input==4)//right
+{
+digitalWrite(leftMotorForward,HIGH);
+digitalWrite(rightMotorForward,LOW);
+digitalWrite(rightMotorBackward,HIGH);
+digitalWrite(leftMotorBackward,LOW);
+}
+}
